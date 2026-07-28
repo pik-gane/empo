@@ -33,11 +33,13 @@ which has been extended with:
 Example usage:
     >>> from empo import WorldModel, PossibleGoal
     >>> from src.envs import SmallOneOrTwoChambersMapEnv
-    >>> 
+    >>>
     >>> env = SmallOneOrTwoChambersMapEnv()
     >>> state = env.get_state()
     >>> transitions = env.transition_probabilities(state, [0, 0])
 """
+
+__version__ = "0.1.0"
 
 from empo.world_model import WorldModel
 from empo.possible_goal import PossibleGoal, PossibleGoalGenerator, PossibleGoalSampler
@@ -53,14 +55,12 @@ try:
 except ImportError:
     _HAS_TRANSPORT = False
 
-__version__ = "0.1.0"
-
 __all__ = [
     # World Model
     "WorldModel",
     # Possible Goals
     "PossibleGoal",
-    "PossibleGoalGenerator", 
+    "PossibleGoalGenerator",
     "PossibleGoalSampler",
     # Human Policy Prior
     "HumanPolicyPrior",
@@ -80,12 +80,14 @@ __all__ = [
 
 # Add transport exports if available
 if _HAS_TRANSPORT:
-    __all__.extend([
-        "TransportEnvWrapper",
-        "TransportActions",
-        "StepType",
-        "create_transport_env",
-        "TransportGoal",
-        "TransportGoalGenerator",
-        "TransportGoalSampler",
-    ])
+    __all__.extend(
+        [
+            "TransportEnvWrapper",
+            "TransportActions",
+            "StepType",
+            "create_transport_env",
+            "TransportGoal",
+            "TransportGoalGenerator",
+            "TransportGoalSampler",
+        ]
+    )

@@ -186,7 +186,7 @@ class PPOPhase2Trainer:
         self.aux_training_step: int = 0  # cumulative warm-up + in-loop aux steps
 
         # TensorBoard writer (initialised lazily in train())
-        self.writer: Optional[Any] = None  # type: Optional[SummaryWriter]
+        self.writer: Optional["SummaryWriter"] = None
 
     # ------------------------------------------------------------------
     # Target-network management

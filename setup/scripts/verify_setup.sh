@@ -14,6 +14,7 @@ echo "1. Checking required files..."
 required_files=(
     "Dockerfile"
     "docker-compose.yml"
+    "pyproject.toml"
     "setup/requirements.txt"
     "setup/requirements-dev.txt"
     "README.md"

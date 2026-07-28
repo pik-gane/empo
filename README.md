@@ -125,6 +125,17 @@ git clone https://github.com/mensch72/empo.git
 cd empo
 ```
 
+For local Python tooling outside Docker, install the root package in editable mode:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pip install -e ./vendor/multigrid -e ./vendor/ai_transport
+```
+
+This replaces the need to add `src/` to `PYTHONPATH` for the main `empo` package. The
+vendored packages can still be installed as editable siblings, or kept on `PYTHONPATH`
+if you prefer that workflow.
+
 ## Google Colab (Recommended for Quick Start)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mensch72/empo/blob/main/notebooks/empo_colab_demo.ipynb)
@@ -580,10 +591,10 @@ apptainer build --fakeroot empo.sif Dockerfile
 
 ### Custom Dependencies
 
-Edit `setup/requirements.txt` to add your dependencies:
+Edit `pyproject.toml` to add your dependencies:
 
 ```bash
-# Add to setup/requirements.txt
+# Add to [project.dependencies] or an optional dependency group
 your-package>=1.0.0
 
 # Rebuild the image

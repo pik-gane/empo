@@ -149,7 +149,21 @@ For maximum maintainability:
 
 #### Note on PYTHONPATH
 
-When running examples outside Docker, always set `PYTHONPATH`:
+When running examples outside Docker, first install the main package in editable mode:
+
+```bash
+python -m pip install -e ".[dev]"
+```
+
+The vendored packages still need to be installed separately or added to `PYTHONPATH`.
+One working option is:
+
+```bash
+python -m pip install -e ./vendor/multigrid -e ./vendor/ai_transport
+```
+
+If you prefer the existing path-based workflow, you can still set `PYTHONPATH`:
+
 ```bash
 PYTHONPATH=src:vendor/multigrid:vendor/ai_transport:multigrid_worlds python examples/<category>/script.py
 ```

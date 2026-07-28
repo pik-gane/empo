@@ -1,0 +1,110 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "empo"
+description = "Human Empowerment AI Agents for model-based planning in multi-agent worlds"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "EMPO contributors" }]
+dynamic = ["version"]
+dependencies = [
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "gymnasium>=0.28.0",
+    "pettingzoo>=1.24.0",
+    "cloudpickle>=3.0.0",
+    "PyYAML>=6.0",
+    "matplotlib>=3.7.0",
+    "imageio>=2.31.0",
+    "imageio-ffmpeg>=0.4.8",
+    "tensorboard>=2.13.0",
+    "wandb>=0.15.0",
+    "graphviz>=0.20.0",
+    "line_profiler>=4.0.0",
+    "tqdm>=4.65.0",
+    "psutil>=5.9.0",
+    "scikit-learn>=1.2.0",
+    "pandas>=2.0.0",
+    "statsmodels>=0.14.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+    "pre-commit>=3.3.0",
+    "ipython>=8.14.0",
+    "jupyter>=1.0.0",
+]
+ppo = ["pufferlib>=3.0"]
+hierarchical = ["ollama>=0.1.0", "Pillow>=10.0.0"]
+mpi = ["mpi4py>=3.1.0"]
+# GPU-specific PyTorch wheels are typically selected via pip index URLs or Docker images.
+gpu = []
+
+[project.urls]
+Homepage = "https://github.com/mensch72/empo"
+Repository = "https://github.com/mensch72/empo"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.dynamic]
+version = { attr = "empo.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["empo*", "llm_hierarchical_modeler*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311"]
+extend-exclude = '''
+(
+  ^/vendor/
+)
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py"]
+extend-exclude = ["vendor"]
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]
+
+[tool.ruff.lint.per-file-ignores]
+"vendor/**" = ["ALL"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["src/empo"]
+mypy_path = ["src"]
+namespace_packages = true
+explicit_package_bases = true
+ignore_missing_imports = true
+show_error_codes = true
+disable_error_code = ["import-untyped", "var-annotated"]
+exclude = [
+    "^vendor/",
+    "^tests/",
+]
+
+[tool.pytest.ini_options]
+minversion = "7.4"
+testpaths = ["tests"]
+addopts = [
+    "-ra",
+    "--ignore=tests/test_mineland_installation.py",
+    "--ignore=tests/debug_dag_by_timestep.py",
+    "--ignore=tests/debug_dag_parallel.py",
+]
