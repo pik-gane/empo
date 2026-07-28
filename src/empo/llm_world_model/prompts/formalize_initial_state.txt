@@ -1,0 +1,30 @@
+You are defining the initial state of a multi-agent world model.
+
+Scene description:
+{scene_desc}
+
+Types:
+{types}
+
+Predicates:
+{predicates}
+
+Agents:
+{agents_summary}
+
+Define the objects in the scene and the initial state by listing all predicates
+that are TRUE at the start. Predicates not listed are assumed FALSE
+(closed-world assumption).
+
+Do NOT include any goal state or objectives.
+
+### OBJECTS
+```
+object_name - type ; description
+```
+
+### INITIAL
+```
+(predicate obj1 obj2) ; description
+(= (function obj) value) ; numeric initialization
+```

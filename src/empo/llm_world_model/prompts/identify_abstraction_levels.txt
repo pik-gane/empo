@@ -1,0 +1,40 @@
+You are identifying natural abstraction levels in a multi-agent world model.
+
+Scene description:
+{scene_desc}
+
+Domain types:
+{types}
+
+Domain predicates:
+{predicates}
+
+Identify natural abstraction levels for hierarchical reasoning:
+- Level 0 (coarse): e.g. rooms, zones, or areas
+- Level 1 (fine): e.g. positions within rooms, specific object locations
+
+For each level, specify:
+- name: a short identifier for the abstraction level
+- predicates: which predicates belong to this level
+- state_aggregation: how fine states map to coarse states
+- macro_actions: what actions exist at the coarse level
+
+### ABSTRACTION LEVELS
+```json
+[
+  {
+    "name": "room_level",
+    "level": 0,
+    "predicates": ["in_room", "room_connected"],
+    "state_aggregation": "Group positions by room",
+    "macro_actions": ["go_to_room", "interact_in_room"]
+  },
+  {
+    "name": "position_level",
+    "level": 1,
+    "predicates": ["at", "adjacent", "holding"],
+    "state_aggregation": "Full position tracking",
+    "macro_actions": ["move", "pick_up", "place"]
+  }
+]
+```

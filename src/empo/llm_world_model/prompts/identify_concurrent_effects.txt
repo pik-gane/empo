@@ -1,0 +1,35 @@
+You are analyzing concurrent action effects in a multi-agent world model.
+
+Scene description:
+{scene_desc}
+
+Agents and their actions:
+{agent_actions_summary}
+
+When two agents act simultaneously, their effects may interact.
+For each pair of actions from DIFFERENT agents, classify the interaction:
+
+1. COMMUTATIVE: effects apply independently (most common, default)
+2. CONFLICTING: effects contradict — need a resolution rule
+   (e.g., both agents try to pick up the same object → neither succeeds)
+3. SYNERGISTIC: combined effect differs from sum of individual effects
+   (e.g., two agents pushing same object together succeeds, one alone fails)
+
+List ONLY non-commutative pairs (conflicts and synergies).
+If all pairs are commutative, output an empty list.
+
+### CONCURRENT EFFECTS
+```json
+[
+  {
+    "agent_a": "robot",
+    "action_a": "pick_up",
+    "agent_b": "human",
+    "action_b": "pick_up",
+    "effect_type": "conflicting",
+    "resolution": "If both agents try to pick up the same object simultaneously, neither succeeds and the object remains in place.",
+    "pddl_condition": "(same_target ?obj)",
+    "pddl_effect": "(not (holding ?agent_a ?obj)) (not (holding ?agent_b ?obj))"
+  }
+]
+```

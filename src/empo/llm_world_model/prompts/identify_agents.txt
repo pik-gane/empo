@@ -1,0 +1,25 @@
+Given the following scene description, identify all distinct agents
+(entities that can take actions and affect the world state).
+
+Scene description:
+{scene_desc}
+
+For each agent, provide:
+- name: a short identifier (lowercase, no spaces)
+- agent_type: the type/category of the agent
+- capabilities: list of things the agent can do
+- action_hints: list of candidate action names
+
+Do NOT include goals, rewards, or objectives. We only need the dynamics.
+
+### AGENTS
+```json
+[
+  {
+    "name": "robot",
+    "agent_type": "robot",
+    "capabilities": ["move between rooms", "pick up objects", "place objects"],
+    "action_hints": ["move", "pick_up", "place"]
+  }
+]
+```

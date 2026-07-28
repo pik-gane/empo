@@ -81,8 +81,8 @@ class OPENAI(BaseLLM):
             "max_completion_tokens": 4096,
             "temperature": 0.0,
             "top_p": 1.0,
-            "frequency_penalty": 0.0,
-            "presence_penalty": 0.0,
+            "frequency_penalty": None,
+            "presence_penalty": None,
             "stop": None,
             "reasoning_effort": None,
         }
@@ -140,11 +140,11 @@ class OPENAI(BaseLLM):
                     "frequency_penalty": self.frequency_penalty,
                     "presence_penalty": self.presence_penalty,
                     "stop": self.stop,
+                    "reasoning_effort": self.reasoning_effort,
                 }
 
-                # only add reasoning_effort if it is not None
-                if self.reasoning_effort is not None:
-                    kwargs["reasoning_effort"] = self.reasoning_effort
+                # Remove parameters that are None (not configured / unsupported by provider)
+                kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
                 # retrieve completion
                 response = self.connect_openai(

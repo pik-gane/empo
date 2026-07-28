@@ -21,6 +21,12 @@ services:
       # Mount host's tmpfs for RAM-based DAG slicing (Linux only, ignored on Mac/Windows)
       - /dev/shm:/dev/shm:rw
     
+    # Prevent container from causing host swap pressure.
+    # memswap_limit = mem_limit means zero swap for the container.
+    # CONTAINER_MEM_LIMIT is computed by `make up` as (total_ram - 2G) or can be overridden.
+    mem_limit: ${CONTAINER_MEM_LIMIT:?Set CONTAINER_MEM_LIMIT or use 'make up'}
+    memswap_limit: ${CONTAINER_MEM_LIMIT:?Set CONTAINER_MEM_LIMIT or use 'make up'}
+
     stdin_open: true
     tty: true
     
@@ -36,7 +42,8 @@ services:
     
     environment:
       - WANDB_API_KEY=${WANDB_API_KEY:-}
-      - PYTHONPATH=/workspace/src:/workspace/vendor/multigrid:/workspace/vendor/ai_transport:/workspace/multigrid_worlds
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - PYTHONPATH=/workspace/src:/workspace/vendor/multigrid:/workspace/vendor/ai_transport:/workspace/vendor/l2p:/workspace/multigrid_worlds
       - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
     
     command: /bin/bash

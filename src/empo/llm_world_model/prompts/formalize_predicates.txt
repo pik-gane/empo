@@ -1,0 +1,24 @@
+You are formalizing a multi-agent world model. Given the following scene
+description and agent list, extract typed predicates that describe the
+SHARED world state.
+
+Scene description:
+{scene_desc}
+
+Agents:
+{agents_summary}
+
+Types:
+{types}
+
+Guidelines:
+- Predicates describe the SHARED state of the world, NOT per-agent private state
+- Include predicates for: agent positions, object locations, object states,
+  spatial relationships, and any other relevant world properties
+- Use typed parameters (e.g., ?agent - agent, ?room - room)
+- Do NOT include predicates about goals, rewards, or objectives
+
+### New Predicates
+```
+- (predicate_name ?param1 - type1 ?param2 - type2): 'description'
+```

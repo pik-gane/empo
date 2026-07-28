@@ -1,0 +1,49 @@
+You are formalizing a prescribed action in a world model.
+
+Current state description:
+{state_desc}
+
+Action to formalize:
+  Name: {action_name}
+  Description: {action_description}
+  Agent: {agent_name}
+
+Available types:
+{types}
+
+Available predicates:
+{predicates}
+
+Existing objects:
+{objects}
+
+The action name and description are given by the environment. Do NOT change them.
+Formalize ONLY the preconditions and effects using the predicates above.
+If the existing predicates are insufficient to express this action's effects,
+list any NEW predicates needed.
+
+### Action Parameters
+```
+- ?param - type: 'description'
+```
+
+### Action Preconditions
+```
+(and
+    (precondition) ; comment
+)
+```
+
+### Action Effects
+```
+(and
+    (effect) ; comment
+    (not (negated_effect)) ; comment
+)
+```
+
+### New Predicates
+```
+- (new_pred ?p1 - type1): 'description'
+```
+(Leave empty if no new predicates are needed.)

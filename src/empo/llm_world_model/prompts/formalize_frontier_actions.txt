@@ -1,0 +1,27 @@
+You are predicting the outcome of an action in a world model.
+
+Current state:
+{state_desc}
+
+Action being taken:
+  Name: {action_name}
+  Description: {action_description}
+  Agent: {agent_name}
+
+Current predicate values:
+{current_predicates}
+
+Predict what the world state will look like AFTER this action is taken.
+If the outcome is uncertain, provide multiple outcomes with probabilities.
+
+### OUTCOMES
+```json
+[
+  {
+    "probability": 1.0,
+    "description": "Natural language description of the resulting state",
+    "true_predicates": ["(pred obj1 obj2)", "(pred2 obj3)"],
+    "new_objects": []
+  }
+]
+```

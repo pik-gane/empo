@@ -1,0 +1,47 @@
+You are formalizing actions for a specific agent in a multi-agent world model.
+
+Scene description:
+{scene_desc}
+
+Agent: {agent_name} (type: {agent_type})
+Capabilities: {agent_capabilities}
+
+Available types:
+{types}
+
+Available predicates:
+{predicates}
+
+Formalize the actions that {agent_name} can perform. Each action should have:
+- Parameters (typed)
+- Preconditions (PDDL logical expression)
+- Effects (PDDL logical expression)
+
+Guidelines:
+- The first parameter of every action should be the agent: ?agent - {agent_type}
+- Only include actions this specific agent can perform
+- Effects should modify the shared world state (predicates listed above)
+- Do NOT include goal-related actions
+
+For each action, provide:
+
+### Action Parameters
+```
+- ?param - type: 'description'
+```
+
+### Action Preconditions
+```
+(and
+    (precondition1)
+    (precondition2)
+)
+```
+
+### Action Effects
+```
+(and
+    (effect1)
+    (not (effect2))
+)
+```

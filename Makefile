@@ -59,6 +59,12 @@ help:
 export USER_ID ?= $(shell id -u)
 export GROUP_ID ?= $(shell id -g)
 
+# Compute safe memory limit: total RAM minus 2 GB reserve (prevents host swap pressure).
+# The container's mem_limit + memswap_limit are both set to this value (zero swap for container).
+# Override with: CONTAINER_MEM_LIMIT=8g make up
+CONTAINER_MEM_LIMIT_AUTO := $(shell awk '/MemTotal/{v=int($$2/1024)-2048; if(v<1024) v=1024; printf "%dm",v}' /proc/meminfo 2>/dev/null || echo "4096m")
+export CONTAINER_MEM_LIMIT ?= $(CONTAINER_MEM_LIMIT_AUTO)
+
 # Docker Compose commands
 build:
 	@echo "Building with USER_ID=$(USER_ID), GROUP_ID=$(GROUP_ID)"
@@ -67,6 +73,7 @@ build:
 up:
 	@echo "Starting development environment..."
 	@echo "✓ Using USER_ID=$(USER_ID), GROUP_ID=$(GROUP_ID) for file permissions"
+	@echo "✓ Container memory limit: $(CONTAINER_MEM_LIMIT) (override with CONTAINER_MEM_LIMIT=Xg)"
 	@if command -v nvidia-smi > /dev/null 2>&1 && nvidia-smi > /dev/null 2>&1; then \
 		echo "✓ GPU detected - GPU will be available in container"; \
 		docker compose up -d --build; \
@@ -96,6 +103,7 @@ restart:
 up-hierarchical:
 	@echo "Starting development environment with Ollama server..."
 	@echo "✓ Using USER_ID=$(USER_ID), GROUP_ID=$(GROUP_ID) for file permissions"
+	@echo "✓ Container memory limit: $(CONTAINER_MEM_LIMIT) (override with CONTAINER_MEM_LIMIT=Xg)"
 	@echo "✓ Building with HIERARCHICAL_MODE=true (uses Docker cache for faster rebuilds)"
 	@HIERARCHICAL_MODE=true docker compose --profile hierarchical build
 	@HIERARCHICAL_MODE=true docker compose --profile hierarchical up -d
@@ -133,7 +141,7 @@ test:
 # Run tests locally without Docker (requires: pip install -r setup/requirements.txt pytest)
 test-local:
 	@echo "Running tests locally..."
-	PYTHONPATH=src:vendor/multigrid:vendor/ai_transport:multigrid_worlds python -m pytest tests/ -v \
+	PYTHONPATH=src:vendor/multigrid:vendor/ai_transport:vendor/l2p:multigrid_worlds python -m pytest tests/ -v \
 		--ignore=tests/test_mineland_installation.py \
 		--ignore=tests/debug_dag_by_timestep.py \
 		--ignore=tests/debug_dag_parallel.py
@@ -141,7 +149,7 @@ test-local:
 # Run only hierarchical world model tests (Tasks 1-11) locally
 test-hierarchical:
 	@echo "Running hierarchical world model tests..."
-	PYTHONPATH=src:vendor/multigrid:vendor/ai_transport:multigrid_worlds python -m pytest \
+	PYTHONPATH=src:vendor/multigrid:vendor/ai_transport:vendor/l2p:multigrid_worlds python -m pytest \
 		tests/test_world_model_duration.py \
 		tests/test_duration_discounting.py \
 		tests/test_hierarchical_base.py \

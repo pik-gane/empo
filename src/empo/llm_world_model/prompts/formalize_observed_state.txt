@@ -1,0 +1,35 @@
+You are mapping a natural language state description to a formal state representation.
+
+State description:
+{state_desc}
+
+Previous state (for reference):
+{prev_state_predicates}
+
+Action taken to reach this state:
+{action_taken}
+
+Available types:
+{types}
+
+Available predicates:
+{predicates}
+
+Existing objects:
+{objects}
+
+List all predicates that are TRUE in this new state.
+Predicates not listed are assumed FALSE (closed-world assumption).
+If new objects appear in this state that weren't in the previous state, list them.
+
+### NEW OBJECTS
+```
+object_name - type ; description
+```
+(Leave empty if no new objects.)
+
+### STATE
+```
+(predicate obj1 obj2) ; description
+(= (function obj) value) ; numeric
+```

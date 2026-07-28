@@ -12,8 +12,14 @@ from collections import OrderedDict
 from copy import deepcopy
 from typing import Optional
 
-from pddl import parse_domain, parse_problem
-from pddl.formatter import domain_to_string, problem_to_string
+try:
+    from pddl import parse_domain, parse_problem
+    from pddl.formatter import domain_to_string, problem_to_string
+except ModuleNotFoundError:
+    parse_domain = None  # pddl package is optional
+    parse_problem = None
+    domain_to_string = None
+    problem_to_string = None
 
 from .pddl_format import remove_comments
 from .pddl_types import Action, Function, Predicate
