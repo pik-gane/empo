@@ -551,7 +551,7 @@ class HeuristicPotentialPolicy(HumanPolicyPrior):
         self,
         world_model: 'WorldModel',
         human_agent_indices: List[int],
-        path_calculator,  # PathDistanceCalculator from empo.nn_based.multigrid
+        path_calculator,  # PathDistanceCalculator from empo.learning_based.multigrid
         beta: float = 10.0,
         num_actions: int = 4
     ):

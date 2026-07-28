@@ -6,7 +6,7 @@ policy priors when the state space is too large for tabular methods.
 
 For multigrid environments, use the `multigrid` subpackage:
 
-    from empo.nn_based.multigrid import (
+    from empo.learning_based.multigrid import (
         MultiGridNeuralHumanPolicyPrior,
         train_multigrid_neural_policy_prior,
         MultiGridQNetwork,
@@ -15,7 +15,7 @@ For multigrid environments, use the `multigrid` subpackage:
 
 Base classes for custom implementations:
 
-    from empo.nn_based import (
+    from empo.learning_based import (
         BaseStateEncoder,
         BaseGoalEncoder,
         BaseQNetwork,

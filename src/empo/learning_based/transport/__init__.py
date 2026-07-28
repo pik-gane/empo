@@ -19,7 +19,7 @@ Main components:
     - neural_policy_prior: Human policy prior using GNN-based Q-network
 
 Example usage:
-    >>> from empo.nn_based.transport import (
+    >>> from empo.learning_based.transport import (
     ...     TransportQNetwork,
     ...     TransportNeuralHumanPolicyPrior,
     ...     observation_to_graph_data,

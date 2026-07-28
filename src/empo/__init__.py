@@ -31,10 +31,12 @@ which has been extended with:
 - Map-based environment specification
 
 Example usage:
-    >>> from empo import WorldModel, PossibleGoal
-    >>> from src.envs import SmallOneOrTwoChambersMapEnv
+    >>> from empo import WorldModel
+    >>> from multigrid_worlds.one_or_three_chambers import SmallOneOrTwoChambersMapEnv
     >>> 
     >>> env = SmallOneOrTwoChambersMapEnv()
+    >>> isinstance(env, WorldModel)
+    True
     >>> state = env.get_state()
     >>> transitions = env.transition_probabilities(state, [0, 0])
 """
