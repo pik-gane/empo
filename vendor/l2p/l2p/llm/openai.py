@@ -11,16 +11,22 @@ Users can also define their own custom models and parameters by extending the YA
 configuration using the same format template.
 """
 
+import math
+import time as _time
+
 from retry import retry
 from typing_extensions import override
 from .base import BaseLLM, load_yaml
+
+import os as _os
+_DEFAULT_CONFIG = _os.path.join(_os.path.dirname(__file__), "utils", "openaiSDK.yaml")
 
 
 class OPENAI(BaseLLM):
     def __init__(
         self,
         model: str,
-        config_path: str = "l2p/llm/utils/openaiSDK.yaml",
+        config_path: str = _DEFAULT_CONFIG,
         provider: str = "openai",
         api_key: str | None = None,
         base_url: str = "https://api.openai.com/v1/",
@@ -91,7 +97,7 @@ class OPENAI(BaseLLM):
         for key, default in defaults.items():
             setattr(self, key, parameters.get(key, default))
 
-    @retry(tries=2, delay=60)
+    @retry(tries=2, delay=15, backoff=math.sqrt(2))
     def connect_openai(self, client, model, messages, **kwargs):
         """Send a request to OpenAI API"""
 
@@ -137,10 +143,15 @@ class OPENAI(BaseLLM):
                     "temperature": self.temperature,
                     "max_completion_tokens": requested_tokens,
                     "top_p": self.top_p,
-                    "frequency_penalty": self.frequency_penalty,
-                    "presence_penalty": self.presence_penalty,
-                    "stop": self.stop,
                 }
+
+                if self.stop is not None:
+                    kwargs["stop"] = self.stop
+
+                # These parameters are not supported by all providers (e.g. Google Gemini)
+                if self.provider != "google":
+                    kwargs["frequency_penalty"] = self.frequency_penalty
+                    kwargs["presence_penalty"] = self.presence_penalty
 
                 # only add reasoning_effort if it is not None
                 if self.reasoning_effort is not None:
@@ -177,9 +188,11 @@ class OPENAI(BaseLLM):
                 conn_success = True
 
             except Exception as e:
-                print(f"[ERROR] LLM error: {e}")
+                delay = 15 * (math.sqrt(2) ** n_retry)
+                print(f"[ERROR] LLM error: {e}  (retrying in {delay:.0f}s)")
                 if end_when_error:
                     break
+                _time.sleep(delay)
 
             n_retry += 1
 

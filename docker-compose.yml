@@ -36,7 +36,7 @@ services:
     
     environment:
       - WANDB_API_KEY=${WANDB_API_KEY:-}
-      - PYTHONPATH=/workspace/src:/workspace/vendor/multigrid:/workspace/vendor/ai_transport:/workspace/multigrid_worlds
+      - PYTHONPATH=/workspace:/workspace/src:/workspace/vendor/multigrid:/workspace/vendor/ai_transport:/workspace/vendor/l2p:/workspace/multigrid_worlds
       - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
     
     command: /bin/bash

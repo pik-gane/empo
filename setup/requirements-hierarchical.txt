@@ -2,12 +2,29 @@
 # These are large packages and are not included in the base Docker image by default.
 # Install with: pip install -r setup/requirements-hierarchical.txt
 
+# L2P dependencies (vendor/l2p) - LLM-to-PDDL planning framework
+# These are required by the vendored l2p library for PDDL parsing and formatting.
+retry
+pddl
+typing_extensions
+pyyaml
+
 # Ollama - Python client for local LLM inference via Ollama server
 # Note: This is just the client library. The Ollama server runs separately,
 # either as a system service or in its own Docker container.
 # See docker-compose.yml for optional Ollama service configuration.
 # See: https://github.com/ollama/ollama-python
 ollama>=0.1.0
+
+# Anthropic - Python client for Claude API
+# See: https://github.com/anthropics/anthropic-sdk-python
+anthropic>=0.39.0
+
+# OpenAI - Python client for OpenAI API (used by vendored l2p library)
+openai>=1.0.0
+
+# tiktoken - Token counter for OpenAI models (required by l2p OPENAI connector)
+tiktoken>=0.5.0
 
 # Pillow - Image processing library (needed for vision LLM integration)
 Pillow>=10.0.0

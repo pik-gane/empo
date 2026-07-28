@@ -443,11 +443,11 @@ class TabularHumanPolicyPrior(HumanPolicyPrior):
             # Compute marginal by averaging over goals weighted by their prior
             vs = self.values[state][human_agent_index]
             # Support override for parallel mode where world_model is None after unpickling
-            if hasattr(self, '_num_actions_override') and self._num_actions_override is not None:
-                num_actions: int = self._num_actions_override
+            if hasattr(self, '_num_actions_per_agent_override') and self._num_actions_per_agent_override is not None:
+                agent_num_actions: int = self._num_actions_per_agent_override[human_agent_index]
             else:
-                num_actions = self.world_model.action_space.n  # type: ignore[attr-defined]
-            total = np.zeros(num_actions)
+                agent_num_actions = self.world_model.num_actions_per_agent[human_agent_index]
+            total = np.zeros(agent_num_actions)
             for goal, weight in self.possible_goal_generator.generate(state, human_agent_index):
 #                key = goal.index if hasattr(goal, 'index') else goal
                 key = goal

@@ -163,7 +163,7 @@ class DefaultBelievedOthersPolicy:
     Usage:
         # Create once at start of Phase 1
         believed_others = DefaultBelievedOthersPolicy(
-            num_agents=4, num_actions=5, 
+            num_agents=4, num_actions_per_agent=[5, 5, 5, 5], 
             human_agent_indices=[0, 2], robot_agent_indices=[1, 3]
         )
         # Call like the old function (state and action are ignored)
@@ -173,7 +173,7 @@ class DefaultBelievedOthersPolicy:
     def __init__(
         self,
         num_agents: int,
-        num_actions: int,
+        num_actions_per_agent: List[int],
         human_agent_indices: List[int],
         robot_agent_indices: List[int]
     ):
@@ -181,12 +181,12 @@ class DefaultBelievedOthersPolicy:
         
         Args:
             num_agents: Total number of agents
-            num_actions: Number of actions per agent
+            num_actions_per_agent: Number of actions for each agent
             human_agent_indices: List of agent indices that are humans
             robot_agent_indices: List of agent indices that are robots
         """
         self.num_agents = num_agents
-        self.num_actions = num_actions
+        self.num_actions_per_agent = num_actions_per_agent
         self.robot_agent_indices = robot_agent_indices
         
         # Precompute for each human agent index, None for non-humans
@@ -195,19 +195,21 @@ class DefaultBelievedOthersPolicy:
         ]
         
         robot_set = set(robot_agent_indices)
-        all_actions = list(range(num_actions))
-        
-        # Number of other human agents (exclude one human and all robots)
-        num_other_humans = num_agents - 1 - len(robot_agent_indices)
-        uniform_p = 1.0 / (num_actions ** num_other_humans) if num_other_humans > 0 else 1.0
         
         for agent_index in human_agent_indices:
+            # Compute uniform probability over other humans' action profiles
+            other_human_total = 1
+            for idx in human_agent_indices:
+                if idx != agent_index:
+                    other_human_total *= num_actions_per_agent[idx]
+            uniform_p = 1.0 / other_human_total if other_human_total > 1 else 1.0
+            
             # Each action profile for the other human agents gets the same probability.
             # The agent's own action and robot actions are set to -1 since they will be overwritten.
             self._cached[agent_index] = [
                 (uniform_p, np.array(action_profile, dtype=np.int64))
                 for action_profile in product(*[
-                    [-1] if (idx == agent_index or idx in robot_set) else all_actions
+                    [-1] if (idx == agent_index or idx in robot_set) else list(range(num_actions_per_agent[idx]))
                     for idx in range(num_agents)
                 ])
             ]

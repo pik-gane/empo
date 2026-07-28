@@ -39,6 +39,22 @@ Example usage:
     >>> transitions = env.transition_probabilities(state, [0, 0])
 """
 
+# Suppress deprecation warning from old 'gym' package, which is transitively
+# imported by shimmy (a gymnasium compatibility shim) when gymnasium discovers
+# gym-multigrid's entry points.  The message is printed by gym_notices via
+# print(..., file=sys.stderr), so warnings.filterwarnings cannot catch it.
+# Neutralising the notices dict before gym is imported prevents the print.
+try:
+    import gym_notices.notices as _gn
+    _gn.notices.clear()
+except Exception:
+    pass
+
+import warnings
+# Suppress pynvml deprecation warning from torch.cuda (harmless, cosmetic only).
+warnings.filterwarnings("ignore", message="The pynvml package is deprecated",
+                        category=FutureWarning)
+
 from empo.world_model import WorldModel
 from empo.possible_goal import PossibleGoal, PossibleGoalGenerator, PossibleGoalSampler
 from empo.human_policy_prior import HumanPolicyPrior, TabularHumanPolicyPrior

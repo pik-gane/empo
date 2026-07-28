@@ -16,6 +16,28 @@
 
 # GEMINI
 google:
+  gemini-3.1-pro-preview:
+    model_family: gemini-3.1
+    model_alias: gemini-3.1-pro-preview
+    model_context_length: 1000000 # max: 1048576
+    model_params:
+      max_completion_tokens: 16384 # max: 65536
+      temperature: 1.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 2.00
+      output: 12.00
+  gemini-3.1-flash-lite-preview:
+    model_family: gemini-3.1
+    model_alias: gemini-3.1-flash-lite-preview
+    model_context_length: 1000000 # max: 1048576
+    model_params:
+      max_completion_tokens: 16384 # max: 65536
+      temperature: 1.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.25
+      output: 1.50
   gemini-3-pro-preview:
     model_family: gemini-3
     model_alias: gemini-3-pro-preview

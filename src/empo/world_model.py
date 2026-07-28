@@ -28,7 +28,7 @@ TransitionData = Tuple[ActionProfile, List[float], List[State]]  # (action_profi
 # Each worker creates its own environment instance to avoid shared state issues
 _worker_env: Optional['WorldModel'] = None  # Worker-local environment instance
 _worker_num_agents: Optional[int] = None
-_worker_num_actions: Optional[int] = None
+_worker_num_actions_per_agent: Optional[List[int]] = None
 
 
 def _init_dag_worker(env_pickle: bytes) -> None:
@@ -39,11 +39,11 @@ def _init_dag_worker(env_pickle: bytes) -> None:
     This approach preserves ALL attributes of the environment, including
     immutable agent properties like can_enter_magic_walls and can_push_rocks.
     """
-    global _worker_env, _worker_num_agents, _worker_num_actions
+    global _worker_env, _worker_num_agents, _worker_num_actions_per_agent
     # Deserialize environment - this creates a complete copy with all attributes
     _worker_env = pickle.loads(env_pickle)
     _worker_num_agents = len(_worker_env.agents)  # type: ignore[union-attr, attr-defined]
-    _worker_num_actions = _worker_env.action_space.n  # type: ignore[union-attr, attr-defined]
+    _worker_num_actions_per_agent = _worker_env.num_actions_per_agent  # type: ignore[union-attr]
 
 
 def _process_state_actions(state: State) -> Tuple[State, Set[State], List[TransitionData]]:
@@ -57,16 +57,18 @@ def _process_state_actions(state: State) -> Tuple[State, Set[State], List[Transi
     Returns:
         tuple: (state, successor_states_set, action_data_list)
     """
-    global _worker_env, _worker_num_agents, _worker_num_actions
+    global _worker_env, _worker_num_agents, _worker_num_actions_per_agent
     
     assert _worker_env is not None
     assert _worker_num_agents is not None
-    assert _worker_num_actions is not None
+    assert _worker_num_actions_per_agent is not None
     
     env = _worker_env
     num_agents = _worker_num_agents
-    num_actions = _worker_num_actions
-    total_action_combinations = num_actions ** num_agents
+    num_actions_per_agent = _worker_num_actions_per_agent
+    total_action_combinations = 1
+    for n in num_actions_per_agent:
+        total_action_combinations *= n
     
     successor_states: Set[State] = set()
     action_data: List[TransitionData] = []
@@ -75,9 +77,9 @@ def _process_state_actions(state: State) -> Tuple[State, Set[State], List[Transi
         # Convert combo_idx to action profile
         action_profile: List[int] = []
         temp = combo_idx
-        for _ in range(num_agents):
-            action_profile.append(temp % num_actions)
-            temp //= num_actions
+        for n in num_actions_per_agent:
+            action_profile.append(temp % n)
+            temp //= n
         action_profile_tuple = tuple(action_profile)
         
         # Get transitions for this action (this calls set_state internally)
@@ -214,6 +216,22 @@ class WorldModel(gym.Env):
             Duration as a float.
         """
         return 1.0
+
+    def V_r_estimate(self, state: Any) -> float:
+        """
+        Return an external estimate of the robot's value (returns-to-go) for a
+        terminal state.
+
+        The default implementation returns 0.0.  Subclasses that have access to
+        extrinsic value estimates (e.g. from an LLM) should override this.
+
+        Args:
+            state: A terminal state as returned by get_state().
+
+        Returns:
+            Estimated value (returns-to-go) for the terminal state.
+        """
+        return 0.0
     
     def initial_state(self) -> Any:
         """
@@ -300,6 +318,23 @@ class WorldModel(gym.Env):
             "Subclasses must implement robot_agent_indices property to identify robot agents. "
             "This is required for Phase 2 training."
         )
+    
+    @property
+    def num_actions_per_agent(self) -> List[int]:
+        """
+        Get the number of actions available to each agent.
+        
+        Returns a list where element i is the number of actions for agent i.
+        The default implementation returns [action_space.n] for all agents
+        (uniform action counts). Subclasses can override this to support
+        agents with different numbers of actions.
+        
+        Returns:
+            List of action counts, one per agent.
+        """
+        n: int = self.action_space.n  # type: ignore[attr-defined]
+        num_agents: int = len(self.agents)  # type: ignore[attr-defined]
+        return [n] * num_agents
     
     def is_terminal(self, state: Optional[Any] = None) -> bool:
         """
@@ -531,8 +566,10 @@ class WorldModel(gym.Env):
         
         # Get action space info once before the loop
         num_agents: int = len(self.agents)  # type: ignore[attr-defined]
-        num_actions: int = self.action_space.n  # type: ignore[attr-defined]
-        total_combinations = num_actions ** num_agents
+        num_actions_per_agent: List[int] = self.num_actions_per_agent
+        total_combinations = 1
+        for n in num_actions_per_agent:
+            total_combinations *= n
         
         # Set up progress bar
         pbar: Optional[tqdm[int]] = None
@@ -558,9 +595,9 @@ class WorldModel(gym.Env):
                 # Convert combo_idx to action profile tuple
                 action_profile: List[int] = []
                 temp = combo_idx
-                for _ in range(num_agents):
-                    action_profile.append(temp % num_actions)
-                    temp //= num_actions
+                for n in num_actions_per_agent:
+                    action_profile.append(temp % n)
+                    temp //= n
                 action_profile_tuple = tuple(action_profile)
                 
                 # Get transition probabilities for this action combination

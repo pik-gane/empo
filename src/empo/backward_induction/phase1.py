@@ -93,7 +93,7 @@ def _hpp_process_single_state(
     Vh_values: Union[VhValues, VhValuesSmall],
     human_agent_indices: List[int],
     possible_goal_generator: PossibleGoalGenerator,
-    num_actions: int,
+    num_actions_per_agent: List[int],
     action_powers: npt.NDArray[np.int64],
     believed_others_policy: Callable[[State, int, int], List[Tuple[float, npt.NDArray[np.int64]]]],
     robot_agent_indices: List[int],
@@ -121,7 +121,7 @@ def _hpp_process_single_state(
         Vh_values: Value function (reads from successors, may write to state_index)
         human_agent_indices: List of agent indices to compute for
         possible_goal_generator: Generator for possible goals
-        num_actions: Number of actions available
+        num_actions_per_agent: Number of actions for each agent
         action_powers: Precomputed powers for action profile indexing
         believed_others_policy: Function for beliefs about other agents
         beta_h: Inverse temperature (can be float('inf') for argmax)
@@ -143,7 +143,6 @@ def _hpp_process_single_state(
     else:
         this_state_cache = None
 
-    actions = range(num_actions)
     v_results: Dict[int, Any] = {}
     p_results: Optional[Dict[int, Any]] = None
     
@@ -172,6 +171,7 @@ def _hpp_process_single_state(
     _duration_cache: Dict[int, npt.NDArray] = {}
     
     for agent_index in human_agent_indices:
+        agent_num_actions = num_actions_per_agent[agent_index]
         vres = v_results[agent_index] = vres0.copy() if use_indexed else {}
         pres = p_results[agent_index] = pres0.copy() if use_indexed else {}
         
@@ -181,15 +181,15 @@ def _hpp_process_single_state(
                 # Goal achieved already in this state: remain still, V=0
                 # Sparse storage: don't store zero values
                 # vres[possible_goal] = np.float16(0)  # Omitted for sparse storage
-                ps = np.zeros(num_actions)
+                ps = np.zeros(agent_num_actions)
                 ps[0] = 1.0  # Assume action 0 is 'stay still'
                 pres[key] = ps
                 if DEBUG:
                     print(f"    Goal achieved in state, agent {agent_index}: V = 0, remain still policy")
             else:
                 # Compute Q values as expected future V values
-                q = np.zeros(num_actions)
-                for action in actions:
+                q = np.zeros(agent_num_actions)
+                for action in range(agent_num_actions):
                     v_accum = 0.0
                     for action_profile_prob, action_profile in believed_others_policy(state, agent_index, action):
                         anticipated_expectation = -math.inf if optimistic else math.inf
@@ -292,7 +292,7 @@ def _hpp_compute_sequential(
     human_agent_indices: List[int], 
     possible_goal_generator: PossibleGoalGenerator,
     num_agents: int, 
-    num_actions: int, 
+    num_actions_per_agent: List[int], 
     action_powers: npt.NDArray[np.int64],
     believed_others_policy: Callable[[State, int, int], List[Tuple[float, npt.NDArray[np.int64]]]], 
     robot_agent_indices: List[int],
@@ -330,7 +330,7 @@ def _hpp_compute_sequential(
     if use_indexed:
         n_goals = possible_goal_generator.n_goals
         vres0 = np.zeros(n_goals, dtype=np.float16)
-        pres0 = np.zeros((n_goals, num_actions), dtype=np.float16)
+        pres0 = np.zeros((n_goals, max(num_actions_per_agent)), dtype=np.float16)
         print(f"Using indexed goals: VhValuesSmall with numpy arrays (n_goals={n_goals})")
     else:
         vres0 = {}
@@ -409,7 +409,7 @@ def _hpp_compute_sequential(
                 v_results, p_results = _hpp_process_single_state(
                     global_state_idx, state, states, state_transitions, Vh_values,
                     human_agent_indices, possible_goal_generator,
-                    num_actions, action_powers, believed_others_policy,
+                    num_actions_per_agent, action_powers, believed_others_policy,
                     robot_agent_indices, robot_action_profiles,
                     beta_h, gamma_h,
                     slice_cache=timestep_cache,
@@ -531,7 +531,7 @@ def _hpp_compute_sequential(
         v_results, p_results = _hpp_process_single_state(
             state_index, state, states, transitions, Vh_values,
             human_agent_indices, possible_goal_generator,
-            num_actions, action_powers, believed_others_policy,
+            num_actions_per_agent, action_powers, believed_others_policy,
             robot_agent_indices, robot_action_profiles,
             beta_h, gamma_h,
             slice_cache=slice_cache,
@@ -653,7 +653,7 @@ def _hpp_process_state_batch(
     assert transitions is not None
     
     Vh_values = _shared_Vh_values
-    (human_agent_indices, possible_goal_generator, num_agents, num_actions, 
+    (human_agent_indices, possible_goal_generator, num_agents, num_actions_per_agent, 
      action_powers, robot_agent_indices, robot_action_profiles, beta_h, gamma_h, optimistic, rho_h) = _shared_params
     
     v_results: Dict[int, Dict[int, Dict[PossibleGoal, float]]] = {}
@@ -673,7 +673,7 @@ def _hpp_process_state_batch(
     else:
         # Create precomputed default believed others policy
         believed_others_policy = DefaultBelievedOthersPolicy(
-            num_agents, num_actions, human_agent_indices, robot_agent_indices)
+            num_agents, num_actions_per_agent, human_agent_indices, robot_agent_indices)
     
     for state_index in state_indices:
         state = states[state_index]
@@ -684,7 +684,7 @@ def _hpp_process_state_batch(
         state_v_results, state_p_results = _hpp_process_single_state(
             state_index, state, states, transitions, Vh_values,
             human_agent_indices, possible_goal_generator,
-            num_actions, action_powers, believed_others_policy,
+            num_actions_per_agent, action_powers, believed_others_policy,
             robot_agent_indices, robot_action_profiles,
             beta_h, gamma_h,
             slice_cache=slice_cache,
@@ -732,7 +732,7 @@ def _hpp_process_timestep_batch_disk(
     disk_dag = _shared_disk_dag
     states = _shared_states
     Vh_values = _shared_Vh_values
-    (human_agent_indices, possible_goal_generator, num_agents, num_actions, 
+    (human_agent_indices, possible_goal_generator, num_agents, num_actions_per_agent, 
      action_powers, robot_agent_indices, robot_action_profiles, beta_h, gamma_h, optimistic, rho_h) = _shared_params
     
     # Deserialize believed_others_policy if custom one was provided via cloudpickle
@@ -741,7 +741,7 @@ def _hpp_process_timestep_batch_disk(
     else:
         # Create precomputed default believed others policy
         believed_others_policy = DefaultBelievedOthersPolicy(
-            num_agents, num_actions, human_agent_indices, robot_agent_indices)
+            num_agents, num_actions_per_agent, human_agent_indices, robot_agent_indices)
     
     # Load DAG slice from disk (transitions for this timestep)
     dag_slice = disk_dag.load_slice(timestep)
@@ -763,7 +763,7 @@ def _hpp_process_timestep_batch_disk(
         state_v_results, state_p_results = _hpp_process_single_state(
             global_state_idx, state, states, state_transitions, Vh_values,
             human_agent_indices, possible_goal_generator,
-            num_actions, action_powers, believed_others_policy,
+            num_actions_per_agent, action_powers, believed_others_policy,
             robot_agent_indices, robot_action_profiles,
             beta_h, gamma_h,
             slice_cache=timestep_cache,
@@ -1048,16 +1048,16 @@ def compute_human_policy_prior(
     # Using nested lists for faster access on first two levels
 
     num_agents: int = len(world_model.agents)  # type: ignore[attr-defined]
-    num_actions: int = world_model.action_space.n  # type: ignore[attr-defined]
+    num_actions_per_agent: List[int] = world_model.num_actions_per_agent
 
     # Compute robot agent indices and all possible robot action profiles
     robot_agent_indices: List[int] = [i for i in range(num_agents) if i not in human_agent_indices]
-    robot_action_profiles: List[List[int]] = [list(profile) for profile in product(range(num_actions), repeat=len(robot_agent_indices))] if robot_agent_indices else [[]]
+    robot_action_profiles: List[List[int]] = [list(profile) for profile in product(*[range(num_actions_per_agent[i]) for i in robot_agent_indices])] if robot_agent_indices else [[]]
 
     if believed_others_policy is None:
         # Create precomputed default believed others policy (fast for sequential execution)
         believed_others_policy = DefaultBelievedOthersPolicy(
-            num_agents, num_actions, human_agent_indices, robot_agent_indices)
+            num_agents, num_actions_per_agent, human_agent_indices, robot_agent_indices)
         believed_others_policy_pickle: Optional[bytes] = None  # No need to pickle the default
     else:
         # Serialize custom believed_others_policy using cloudpickle for parallel mode
@@ -1066,7 +1066,7 @@ def compute_human_policy_prior(
         believed_others_policy_pickle = cloudpickle.dumps(believed_others_policy)
 
     # Precompute powers for action profile indexing
-    action_powers: npt.NDArray[np.int64] = num_actions ** np.arange(num_agents)
+    action_powers: npt.NDArray[np.int64] = np.cumprod([1] + num_actions_per_agent[:-1]).astype(np.int64)
 
     # Resolve gamma_h / rho_h: at most one may be provided (neither → default 1.0)
     if gamma_h is not None and rho_h is not None:
@@ -1095,7 +1095,7 @@ def compute_human_policy_prior(
     if not quiet:
         mem_stats = estimate_dag_memory(states, transitions, num_agents, 
                                        len(list(possible_goal_generator.generate(states[0], human_agent_indices[0]))),
-                                       num_actions,
+                                       max(num_actions_per_agent),
                                        include_cache=use_attainment_cache,
                                        num_humans=len(human_agent_indices),
                                        num_robots=len(robot_agent_indices))
@@ -1132,7 +1132,7 @@ def compute_human_policy_prior(
             raise ValueError("use_disk_slicing=True requires level_fct to be provided")
         
         # Calculate num_action_profiles for cache initialization
-        num_action_profiles_for_cache = num_actions ** num_agents
+        num_action_profiles_for_cache = int(np.prod(num_actions_per_agent))
         
         if not quiet:
             print(f"\nCreating disk-based DAG slices...")
@@ -1233,7 +1233,7 @@ def compute_human_policy_prior(
     # Set use_attainment_cache=False to save ~3GB memory for simple goals.
     # Structure: SlicedAttainmentCache holds slices indexed by slice_id
     # Each slice is Dict[state_index, List[Dict[goal, array]]] for efficient access.
-    num_action_profiles = num_actions ** num_agents
+    num_action_profiles = int(np.prod(num_actions_per_agent))
     sliced_cache: Optional[SlicedAttainmentCache] = None
     if use_attainment_cache:
         existing_cache = getattr(world_model, '_attainment_cache', None)
@@ -1290,8 +1290,8 @@ def compute_human_policy_prior(
             
             # Initialize shared data for worker processes
             # On Linux (fork), workers inherit these as copy-on-write
-            params: Tuple[List[int], PossibleGoalGenerator, int, int, npt.NDArray[np.int64], List[int], List[List[int]], float, float, bool, float] = (
-                human_agent_indices, possible_goal_generator, num_agents, num_actions,
+            params: Tuple[List[int], PossibleGoalGenerator, int, List[int], npt.NDArray[np.int64], List[int], List[List[int]], float, float, bool, float] = (
+                human_agent_indices, possible_goal_generator, num_agents, num_actions_per_agent,
                 action_powers, robot_agent_indices, robot_action_profiles, beta_h, gamma_h, optimistic, rho_h
             )
             
@@ -1376,7 +1376,7 @@ def compute_human_policy_prior(
                         v_results, p_results = _hpp_process_single_state(
                             state_index, state, states, transitions, Vh_values,
                             human_agent_indices, possible_goal_generator,
-                            num_actions, action_powers, believed_others_policy,
+                            num_actions_per_agent, action_powers, believed_others_policy,
                             robot_agent_indices, robot_action_profiles,
                             beta_h, gamma_h,
                             slice_cache=inline_slice_cache,
@@ -1575,7 +1575,7 @@ def compute_human_policy_prior(
         try:
             _hpp_compute_sequential(states, Vh_values, system2_policies, transitions,
                              human_agent_indices, possible_goal_generator,
-                             num_agents, num_actions, action_powers,
+                             num_agents, num_actions_per_agent, action_powers,
                              believed_others_policy, robot_agent_indices, robot_action_profiles,
                              beta_h, gamma_h,
                              progress_callback, memory_monitor,

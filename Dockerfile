@@ -8,8 +8,7 @@ FROM python:3.11-slim-bookworm
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8 \
-    PYTHONPATH=/workspace:/workspace/src:/workspace/vendor/multigrid:/workspace/vendor/ai_transport
+    LC_ALL=C.UTF-8
 
 # Set working directory
 WORKDIR /workspace
@@ -32,8 +31,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     libxext6 \
     libxrender-dev \
     graphviz \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+    ffmpeg
 
 # Upgrade pip
 RUN pip install --upgrade pip setuptools wheel
@@ -60,7 +58,12 @@ RUN --mount=type=cache,target=/root/.cache/pip,uid=0,gid=0 \
     pip install -r /tmp/requirements-dev.txt ; \
     fi
 
-# Install hierarchical dependencies only if HIERARCHICAL_MODE is set
+# Install hierarchical/LLM Python dependencies (lightweight: pddl, retry, ollama, etc.)
+# Always installed since the LLM-based modeler is part of core functionality.
+RUN --mount=type=cache,target=/root/.cache/pip,uid=0,gid=0 \
+    pip install -r /tmp/requirements-hierarchical.txt
+
+# Install MineLand and heavy system deps only if HIERARCHICAL_MODE is set
 # MineLand requires Java JDK 17, Node.js 18.x, and xvfb for headless rendering
 # MineLand is a multi-agent Minecraft RL platform from https://github.com/cocacola-lab/MineLand
 ARG HIERARCHICAL_MODE=false
@@ -79,11 +82,6 @@ RUN if [ "$HIERARCHICAL_MODE" = "true" ] ; then \
     echo "Installing Node.js 18.x for MineLand..." && \
     curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs ; \
-    fi
-RUN --mount=type=cache,target=/root/.cache/pip,uid=0,gid=0 \
-    if [ "$HIERARCHICAL_MODE" = "true" ] ; then \
-    echo "Installing hierarchical Python dependencies..." && \
-    pip install -r /tmp/requirements-hierarchical.txt ; \
     fi
 # Clone MineLand from GitHub first (separate layer for better caching)
 # Also fix their broken setup.py (where='mineland' should be where='.')
@@ -145,6 +143,9 @@ RUN mkdir -p /workspace && chown -R ${USER_ID}:${GROUP_ID} /workspace
 RUN if [ "$HIERARCHICAL_MODE" = "true" ] ; then \
     chown -R ${USER_ID}:${GROUP_ID} /opt/MineLand ; \
     fi
+
+# Runtime environment (placed after install steps so changes don't bust cache)
+ENV PYTHONPATH=/workspace:/workspace/src:/workspace/vendor/multigrid:/workspace/vendor/ai_transport:/workspace/vendor/l2p:/workspace/multigrid_worlds
 
 # Switch to non-root user
 USER appuser
